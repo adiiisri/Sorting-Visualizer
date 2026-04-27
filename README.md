@@ -4,7 +4,7 @@
 
 <hr>
 
-[Click Here to View Live Project](https://sort-adiiisri.netlify.app/)
+[Try Yourself 🚀](https://sort-adiiisri.netlify.app/)
 
 ## 🚀 Features
 
