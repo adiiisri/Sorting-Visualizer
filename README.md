@@ -95,7 +95,7 @@ in your browser.
 1. Clone the repository
 
 ```
-git clone https://github.com/akshayakumar2020/Sorting-Visualizer.git
+https://github.com/adiiisri/Sorting-Visualizer.git
 ```
 
 2. Open the project folder
@@ -122,7 +122,7 @@ This project is designed to help students and developers:
 
 ## 👨‍💻 Author
 
-Akshaya Kumar
+Aditya Srivastava
 
 ---
 
