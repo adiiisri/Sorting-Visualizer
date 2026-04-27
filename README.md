@@ -1,129 +1,60 @@
-# Sorting-Visualizer
+## 🔄 Interactive Sorting Visualizer
 
-An interactive **Sorting Algorithm Visualizer** built using **HTML, JavaScript, and Tailwind CSS**.
-This project helps users understand how different sorting algorithms work through **real-time visualization and animations**.
+<p>This tool is a clean, easy-to-use web app that lets you watch sorting algorithms work in real-time. It features a professional design where you can experiment with different types of data, track live stats, and switch to dark mode for a better viewing experience.</p>
 
----
+<hr>
+
+[Click Here to View Live Project](https://sort-adiiisri.netlify.app/)
 
 ## 🚀 Features
 
-* 📊 Visual representation of sorting algorithms
-* ⚡ Adjustable sorting speed
-* 📏 Dynamic array size control
-* 🎯 Step-by-step visualization mode
-* 🎲 Generate random arrays
-* 🧩 Custom array input
-* 🌙 Dark mode support
-* 🔊 Sound effects during swaps
-* 📈 Real-time statistics (comparisons, swaps, time)
-* 📋 Multiple preset array patterns
-* 📊 Array statistics (min, max, average, median, duplicates)
+<ul>
+  <li><b>Multiple Algorithms:</b> Visualize a range of common sorting algorithms, including:
+    <ul>
+      <li>Bubble Sort</li>
+      <li>Selection Sort</li>
+      <li>Insertion Sort</li>
+      <li>Quick Sort</li>
+      <li>Merge Sort</li>
+      <li>Heap Sort</li>
+      <li>Radix Sort</li>
+    </ul>
+  </li>
+  <li><b>Dynamic Visualization:</b> Watch as the array bars change height, color, and position to represent the sorting process.</li>
+  <li><b>Performance Statistics:</b> Keep track of <b>Comparisons</b> and <b>Swaps</b> as the algorithm runs, providing insight into the efficiency of each method.</li>
+  <li><b>Customizable Array:</b>
+    <ul>
+      <li>Adjust the Array Size dynamically with a slider.</li>
+      <li>Choose from several <b>Preset Arrays</b> (Random, Reverse Sorted, Nearly Sorted, Few Unique, Mountain, Valley) to test algorithms on different data distributions.</li>
+      <li>Load your own <b>Custom Array</b> by entering comma-separated values.</li>
+    </ul>
+  </li>
+  <li><b>Speed Control:</b> Change the visualization speed from "Slow" to "Lightning" to observe the process at your preferred pace.</li>
+  <li><b>Dark Mode:</b> A toggleable dark mode for a more comfortable viewing experience.</li>
+  <li><b>Sound Effects:</b> Subtle sound cues enhance the visualization of swaps and comparisons.</li>
+  <li><b>Value Labels:</b> Option to show the numerical value of each bar for a clearer understanding.</li>
+</ul>
 
----
+<hr>
 
-## 🧠 Supported Algorithms
+## 💻 Technologies Used
 
-The visualizer supports the following algorithms:
+<ul>
+  <li><b>HTML5:</b> For the page structure.</li>
+  <li><b>CSS3 (Tailwind CSS):</b> For all styling, layout, and modern UI components. Tailwind's utility-first approach makes it easy to style and maintain the visualizer.</li>
+  <li><b>JavaScript (ES6+):</b> Powers all of the logic, including the core sorting algorithms, real-time array manipulation and rendering, UI event handling, state management, and performance tracking.</li>
+</ul>
 
-* Bubble Sort
-* Selection Sort
-* Insertion Sort
-* Quick Sort
-* Merge Sort
-* Heap Sort
-* Radix Sort
+<hr>
 
-Each algorithm includes:
+## ⚙️ How to Run
 
-* Description
-* Time Complexity
-* Space Complexity
-* Stability information
+<p>This project is a single HTML file and can be run directly in any modern web browser.</p>
 
----
+<ol>
+  <li>Clone or download this repository.</li>
+  <li>Open the <code>index.html</code> file in your browser.</li>
+  <li>That's it! No build tools or server required.</li>
+</ol>
 
-## 🎮 Controls
-
-| Control           | Description                 |
-| ----------------- | --------------------------- |
-| Generate Array    | Creates a new random array  |
-| Start Sorting     | Starts visualization        |
-| Speed Control     | Adjust animation speed      |
-| Array Size Slider | Change number of elements   |
-| Step Mode         | View sorting step by step   |
-| Presets           | Load special array patterns |
-| Custom Input      | Enter your own numbers      |
-
----
-
-## 📊 Array Presets
-
-The project includes special datasets to test algorithms:
-
-* Random
-* Reverse Sorted
-* Nearly Sorted
-* Few Unique Values
-* Mountain Pattern
-* Valley Pattern
-
----
-
-## 🛠️ Technologies Used
-
-* **HTML5**
-* **JavaScript (ES6)**
-* **Tailwind CSS**
-* **Web Audio API**
-
----
-
-## 📷 Demo
-
-You can run the project locally by opening:
-
-```
-index.html
-```
-
-in your browser.
-
----
-
-## 💻 Installation
-
-1. Clone the repository
-
-```
-https://github.com/adiiisri/Sorting-Visualizer.git
-```
-
-2. Open the project folder
-
-3. Run
-
-```
-index.html
-```
-
-in your browser.
-
----
-
-## 📚 Learning Purpose
-
-This project is designed to help students and developers:
-
-* Understand sorting algorithms visually
-* Compare algorithm performance
-* Learn algorithm complexity concepts
-
----
-
-## 👨‍💻 Author
-
-Aditya Srivastava
-
----
-
-⭐ If you like this project, consider giving it a star on GitHub!
+<hr>
