@@ -1,262 +1,468 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Advanced Sorting Visualizer</title>
+    <title>Sorting Visualizer - Premium Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
     <script>
         tailwind.config = {
             darkMode: 'class',
             theme: {
                 extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['Fira Code', 'monospace'],
+                    },
+                    colors: {
+                        bgMain: '#020617',
+                        bgSoft: '#0f172a',
+                        textMain: '#f8fafc',
+                        textSoft: '#94a3b8',
+                        accent: '#38bdf8',
+                        accent2: '#6366f1',
+                        success: '#22c55e',
+                        danger: '#ef4444',
+                        warning: '#facc15',
+                        purpleUi: '#a855f7',
+                    },
                     animation: {
-                        'bounce-subtle': 'bounce 0.3s ease-in-out',
+                        'bounce-subtle': 'bounceSubtle 0.3s ease-in-out',
                         'pulse-slow': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
                         'shake': 'shake 0.5s ease-in-out',
+                        'float': 'float 6s ease-in-out infinite',
+                        'wave': 'wave 1.5s ease-in-out infinite',
                     },
                     keyframes: {
                         shake: {
                             '0%, 100%': { transform: 'translateX(0)' },
                             '25%': { transform: 'translateX(-5px)' },
                             '75%': { transform: 'translateX(5px)' }
+                        },
+                        bounceSubtle: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' }
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px)' },
+                            '50%': { transform: 'translateY(-20px)' }
+                        },
+                        wave: {
+                            '0%': { transform: 'scaleY(1)' },
+                            '50%': { transform: 'scaleY(1.1)' },
+                            '100%': { transform: 'scaleY(1)' }
                         }
                     }
                 }
             }
         }
     </script>
+    <style>
+        :root {
+            --bg-card: rgba(15, 23, 42, 0.72);
+            --border: rgba(255,255,255,0.08);
+        }
+        body {
+            background-color: #020617;
+            color: #f8fafc;
+            overflow-x: hidden;
+            position: relative;
+        }
+        .glass-panel {
+            background: var(--bg-card);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Background Effects */
+        .bg-mesh {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1;
+            background: 
+                radial-gradient(circle at 15% 50%, rgba(56, 189, 248, 0.08), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(99, 102, 241, 0.08), transparent 25%);
+            animation: float 10s ease-in-out infinite alternate;
+        }
+
+        .slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 6px;
+            border-radius: 4px;
+            background: rgba(255,255,255,0.1);
+            outline: none;
+        }
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #38bdf8;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+            transition: transform 0.2s;
+        }
+        .slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.4); }
+
+        .btn-premium {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        .btn-premium::after {
+            content: '';
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 300%; height: 300%;
+            background: rgba(255,255,255,0.1);
+            transform: translate(-50%, -50%) scale(0);
+            border-radius: 50%;
+            transition: transform 0.5s;
+        }
+        .btn-premium:active::after {
+            transform: translate(-50%, -50%) scale(1);
+            transition: transform 0s;
+        }
+
+        /* Syntax highlighting for pseudocode */
+        .token-keyword { color: #a855f7; font-weight: 500; }
+        .token-function { color: #38bdf8; }
+        .token-number { color: #facc15; }
+        .token-comment { color: #94a3b8; font-style: italic; }
+        
+        .active-line {
+            background-color: rgba(99, 102, 241, 0.2);
+            border-left: 3px solid #6366f1;
+        }
+        
+        #logContainer > div {
+            animation: fadeIn 0.3s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Confetti Canvas */
+        #confettiCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+        }
+    </style>
 </head>
-<body class="bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 min-h-screen transition-colors duration-300">
-    <div class="container mx-auto px-4 py-8">
-        <!-- Header -->
-        <div class="text-center mb-8">
-            <h1 class="text-4xl font-bold text-gray-800 dark:text-white mb-2">
-                🔄 Advanced Sorting Visualizer
-            </h1>
-            <p class="text-gray-600 dark:text-gray-300">
-                Professional sorting algorithm visualization with step-by-step mode
-            </p>
+<body class="antialiased min-h-screen flex flex-col">
+    <div class="bg-mesh"></div>
+    <canvas id="confettiCanvas" class="hidden"></canvas>
+
+    <!-- Success Modal -->
+    <div id="successModal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/50 backdrop-blur-sm transition-opacity duration-300 opacity-0">
+        <div class="glass-panel p-8 rounded-2xl border-success/30 border text-center transform scale-95 transition-transform duration-300" id="successModalContent">
+            <div class="text-6xl mb-4 text-success animate-bounce">🎉</div>
+            <h2 class="text-3xl font-bold text-white mb-2">Array Sorted Successfully!</h2>
+            <p class="text-textSoft mb-6">Algorithm completed in <span id="modalTime" class="text-accent font-mono">0</span> seconds with <span id="modalSwaps" class="text-danger font-mono">0</span> swaps.</p>
+            <button id="closeModalBtn" class="btn-premium bg-white/10 hover:bg-white/20 px-6 py-2 rounded-lg font-medium text-white transition-all">Continue Exploring</button>
         </div>
+    </div>
 
-        <!-- Controls Panel -->
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-8 transition-colors duration-300">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <!-- Algorithm Selection -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Algorithm
-                    </label>
-                    <select id="algorithmSelect" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors duration-300">
-                        <option value="bubble">Bubble Sort</option>
-                        <option value="selection">Selection Sort</option>
-                        <option value="insertion">Insertion Sort</option>
-                        <option value="quick">Quick Sort</option>
-                        <option value="merge">Merge Sort</option>
-                        <option value="heap">Heap Sort</option>
-                        <option value="radix">Radix Sort</option>
-                    </select>
-                </div>
+    <div class="container mx-auto px-4 py-8 flex-grow flex flex-col gap-6">
+        
+        <!-- Header / Hero Section -->
+        <header class="text-center py-6 animate-[fadeIn_0.8s_ease-out]">
+            <h1 class="text-5xl md:text-6xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-accent to-accent2 drop-shadow-lg">
+                Sorting Visualizer
+            </h1>
+            <p class="text-lg md:text-xl text-textSoft max-w-2xl mx-auto font-light">
+                Understand how algorithms think, compare, and sort data in real time.
+            </p>
+            
+            <div class="flex flex-wrap justify-center gap-3 mt-6">
+                <span class="px-3 py-1 text-sm rounded-full glass-panel border-accent/20 text-accent">Bubble Sort</span>
+                <span class="px-3 py-1 text-sm rounded-full glass-panel border-purpleUi/20 text-purpleUi">Quick Sort</span>
+                <span class="px-3 py-1 text-sm rounded-full glass-panel border-success/20 text-success">Merge Sort</span>
+                <span class="px-3 py-1 text-sm rounded-full glass-panel border-warning/20 text-warning">Heap Sort</span>
+            </div>
+        </header>
 
-                <!-- Speed Control -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Speed
-                    </label>
-                    <select id="speedSelect" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors duration-300">
-                        <option value="300">Slow</option>
-                        <option value="100" selected>Normal</option>
-                        <option value="30">Fast</option>
-                        <option value="5">Lightning</option>
-                    </select>
-                </div>
+        <!-- Main Layout Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-grow">
+            
+            <!-- Left Column: Controls & Analytics (Span 3) -->
+            <div class="lg:col-span-3 flex flex-col gap-6">
+                
+                <!-- Controls Dashboard -->
+                <div class="glass-panel rounded-2xl p-5 shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300">
+                    <h3 class="text-xl font-semibold mb-4 flex items-center gap-2">
+                        <span class="text-accent2">🎮</span> Control Center
+                    </h3>
+                    
+                    <div class="space-y-4">
+                        <!-- Algorithm Select -->
+                        <div>
+                            <label class="block text-sm font-medium text-textSoft mb-1">Algorithm</label>
+                            <select id="algorithmSelect" class="w-full bg-bgSoft border border-border rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-accent outline-none transition-all">
+                                <option value="bubble">Bubble Sort</option>
+                                <option value="selection">Selection Sort</option>
+                                <option value="insertion">Insertion Sort</option>
+                                <option value="quick">Quick Sort</option>
+                                <option value="merge">Merge Sort</option>
+                                <option value="heap">Heap Sort</option>
+                                <option value="radix">Radix Sort</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Array Size -->
+                        <div>
+                            <div class="flex justify-between mb-1">
+                                <label class="text-sm font-medium text-textSoft">Array Size</label>
+                                <span id="arraySizeValue" class="text-sm font-mono text-accent">50</span>
+                            </div>
+                            <input type="range" id="arraySizeSlider" min="10" max="100" value="50" class="slider">
+                        </div>
 
-                <!-- Array Size -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Array Size: <span id="arraySizeValue">50</span>
-                    </label>
-                    <input type="range" id="arraySizeSlider" min="10" max="100" value="50" 
-                           class="w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer slider">
-                </div>
+                        <!-- Speed -->
+                        <div>
+                            <label class="block text-sm font-medium text-textSoft mb-1">Animation Speed</label>
+                            <select id="speedSelect" class="w-full bg-bgSoft border border-border rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-accent outline-none transition-all">
+                                <option value="300">🐢 Slow</option>
+                                <option value="100" selected>🚶 Normal</option>
+                                <option value="30">🏃 Fast</option>
+                                <option value="5">⚡ Lightning</option>
+                            </select>
+                        </div>
 
-                <!-- Action Buttons -->
-                <div class="flex flex-col gap-2">
-                    <button id="generateBtn" class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors duration-200 font-medium">
-                        🎲 Generate Array
-                    </button>
-                    <button id="sortBtn" class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors duration-200 font-medium">
-                        ▶️ Start Sorting
-                    </button>
-                </div>
-
-                <!-- Step-by-Step Mode Toggle -->
-                <div class="md:col-span-2 lg:col-span-4">
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Step-by-Step Mode
-                    </label>
-                    <div class="flex gap-2 items-center">
-                        <button id="stepModeToggle" class="px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg transition-colors duration-200 font-medium">
-                            🎯 Enable Step Mode
-                        </button>
-                        <div id="stepControls" class="flex gap-2 hidden">
-                            <button id="stepPrevBtn" class="px-3 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-colors duration-200 font-medium">
-                                ⏮️ Prev
+                        <!-- Primary Actions -->
+                        <div class="pt-2 flex flex-col gap-2">
+                            <button id="generateBtn" class="btn-premium w-full py-2.5 bg-white/5 hover:bg-white/10 border border-border rounded-lg font-medium transition-colors flex items-center justify-center gap-2">
+                                🎲 Generate New Array
                             </button>
-                            <button id="stepNextBtn" class="px-3 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors duration-200 font-medium">
-                                ⏭️ Next
+                            <button id="sortBtn" class="btn-premium w-full py-2.5 bg-gradient-to-r from-accent to-accent2 hover:opacity-90 rounded-lg font-bold text-white shadow-[0_0_15px_rgba(56,189,248,0.4)] transition-all flex items-center justify-center gap-2">
+                                ▶️ Start Sorting
                             </button>
-                            <button id="stepPlayBtn" class="px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors duration-200 font-medium">
-                                ▶️ Play
+                        </div>
+
+                        <!-- Step Mode Options -->
+                        <div class="pt-2 border-t border-border">
+                            <button id="stepModeToggle" class="btn-premium w-full py-2 bg-purpleUi/20 hover:bg-purpleUi/30 text-purple-300 border border-purpleUi/30 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2">
+                                🎯 Enable Step Mode
                             </button>
-                            <button id="stepPauseBtn" class="px-3 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg transition-colors duration-200 font-medium">
-                                ⏸️ Pause
+                            <div id="stepControls" class="hidden grid-cols-2 gap-2 mt-2">
+                                <button id="stepPrevBtn" class="bg-white/10 hover:bg-white/20 py-1.5 rounded-lg text-sm flex items-center justify-center gap-1 transition-colors">⏮️ Prev</button>
+                                <button id="stepNextBtn" class="bg-white/10 hover:bg-white/20 py-1.5 rounded-lg text-sm flex items-center justify-center gap-1 transition-colors">Next ⏭️</button>
+                                <button id="stepPauseBtn" class="bg-warning/20 text-warning hover:bg-warning/30 py-1.5 rounded-lg text-sm flex items-center justify-center gap-1 transition-colors col-span-2">⏸️ Pause</button>
+                            </div>
+                        </div>
+
+                        <!-- Toggles -->
+                        <div class="flex justify-between border-t border-border pt-4">
+                            <button id="soundToggle" class="p-2 bg-bgSoft rounded-lg hover:bg-white/10 transition-colors tooltip" title="Toggle Sound">
+                                <span id="soundIcon">🔊</span>
                             </button>
-                            <button id="stepResetBtn" class="px-3 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors duration-200 font-medium">
-                                🔄 Reset
+                            <button id="showValuesToggle" class="p-2 bg-bgSoft rounded-lg hover:bg-white/10 transition-colors tooltip" title="Toggle Values">
+                                <span id="showValuesIcon">🔢</span>
                             </button>
                         </div>
                     </div>
-                    <div id="stepInfo" class="mt-2 text-sm text-gray-600 dark:text-gray-400 hidden">
-                        Current Step: <span id="currentStep">Ready to start</span>
+                </div>
+
+                <!-- Real-time Analytics -->
+                <div class="glass-panel rounded-2xl p-5 shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300">
+                    <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
+                        <span class="text-success">📈</span> Analytics
+                    </h3>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-bgSoft p-3 rounded-lg border border-border/50 text-center">
+                            <div class="text-xs text-textSoft mb-1">Comparisons</div>
+                            <div id="comparisons" class="text-xl font-mono font-bold text-accent">0</div>
+                        </div>
+                        <div class="bg-bgSoft p-3 rounded-lg border border-border/50 text-center">
+                            <div class="text-xs text-textSoft mb-1">Swaps</div>
+                            <div id="swaps" class="text-xl font-mono font-bold text-danger">0</div>
+                        </div>
+                        <div class="bg-bgSoft p-3 rounded-lg border border-border/50 text-center col-span-2">
+                            <div class="text-xs text-textSoft mb-1">Elapsed Time</div>
+                            <div id="timeElapsed" class="text-xl font-mono font-bold text-success">0.0s</div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Preset Arrays -->
-                <div class="md:col-span-2 lg:col-span-4">
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Preset Arrays
-                    </label>
-                    <div class="flex flex-wrap gap-2">
-                        <button id="presetRandom" class="px-3 py-1 bg-gray-500 hover:bg-gray-600 text-white rounded text-sm transition-colors duration-200">
-                            🎲 Random
-                        </button>
-                        <button id="presetReverse" class="px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded text-sm transition-colors duration-200">
-                            📉 Reverse Sorted
-                        </button>
-                        <button id="presetNearlySorted" class="px-3 py-1 bg-yellow-500 hover:bg-yellow-600 text-white rounded text-sm transition-colors duration-200">
-                            📈 Nearly Sorted
-                        </button>
-                        <button id="presetFewUnique" class="px-3 py-1 bg-purple-500 hover:bg-purple-600 text-white rounded text-sm transition-colors duration-200">
-                            🔄 Few Unique
-                        </button>
-                        <button id="presetMountain" class="px-3 py-1 bg-indigo-500 hover:bg-indigo-600 text-white rounded text-sm transition-colors duration-200">
-                            ⛰️ Mountain
-                        </button>
-                        <button id="presetValley" class="px-3 py-1 bg-teal-500 hover:bg-teal-600 text-white rounded text-sm transition-colors duration-200">
-                            🏔️ Valley
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Custom Array Input -->
-                <div class="md:col-span-2 lg:col-span-4">
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Custom Array Input
-                    </label>
-                    <div class="flex gap-2 mb-2">
-                        <input type="text" id="customArrayInput" 
-                               placeholder="e.g., 64, 34, 25, 12, 22, 11, 90"
-                               class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors duration-300">
-                        <button id="loadCustomBtn" class="px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg transition-colors duration-200 font-medium whitespace-nowrap">
-                            📝 Load Custom
-                        </button>
-                        <button id="clearInputBtn" class="px-3 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-colors duration-200">
-                            ✕
-                        </button>
-                    </div>
-                    <div id="inputError" class="mt-1 text-sm text-red-600 dark:text-red-400 hidden"></div>
-                    <div class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                        Enter numbers (1-100), separated by commas. Max 100 elements.
-                    </div>
-                </div>
             </div>
 
-            <!-- Controls Footer -->
-            <div class="flex justify-between items-center mt-6 pt-6 border-t border-gray-200 dark:border-gray-600">
-                <div class="flex items-center space-x-4">
-                    <button id="darkModeToggle" class="p-2 rounded-lg bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors duration-200">
-                        <span class="dark:hidden">🌙</span>
-                        <span class="hidden dark:inline">☀️</span>
-                    </button>
-                    <button id="soundToggle" class="p-2 rounded-lg bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors duration-200">
-                        <span id="soundIcon">🔊</span>
-                    </button>
-                    <button id="showValuesToggle" class="p-2 rounded-lg bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors duration-200">
-                        <span id="showValuesIcon">🔢</span>
-                    </button>
-                </div>
+            <!-- Center Column: Visualization & Arrays (Span 6) -->
+            <div class="lg:col-span-6 flex flex-col gap-6">
+                
+                <!-- Visualization Area -->
+                <div class="glass-panel rounded-2xl p-6 shadow-xl flex flex-col h-[500px] hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 relative overflow-hidden">
+                    <!-- Legend -->
+                    <div class="flex flex-wrap justify-center gap-4 text-xs mb-4">
+                        <span class="flex items-center gap-1"><div class="w-3 h-3 bg-accent rounded-sm"></div> Default</span>
+                        <span class="flex items-center gap-1"><div class="w-3 h-3 bg-warning rounded-sm"></div> Compare</span>
+                        <span class="flex items-center gap-1"><div class="w-3 h-3 bg-danger rounded-sm"></div> Swap</span>
+                        <span class="flex items-center gap-1"><div class="w-3 h-3 bg-success rounded-sm"></div> Sorted</span>
+                        <span class="flex items-center gap-1"><div class="w-3 h-3 bg-purpleUi rounded-sm"></div> Pivot/Key</span>
+                    </div>
 
-                <!-- Statistics -->
-                <div class="flex space-x-6 text-sm">
-                    <div class="text-center">
-                        <div class="font-medium text-gray-700 dark:text-gray-300">Comparisons</div>
-                        <div id="comparisons" class="text-xl font-bold text-blue-600 dark:text-blue-400">0</div>
-                    </div>
-                    <div class="text-center">
-                        <div class="font-medium text-gray-700 dark:text-gray-300">Swaps</div>
-                        <div id="swaps" class="text-xl font-bold text-red-600 dark:text-red-400">0</div>
-                    </div>
-                    <div class="text-center">
-                        <div class="font-medium text-gray-700 dark:text-gray-300">Time</div>
-                        <div id="timeElapsed" class="text-xl font-bold text-green-600 dark:text-green-400">0s</div>
+                    <div id="arrayContainer" class="flex items-end justify-center gap-[2px] flex-grow w-full border-b border-border/50 pb-1">
+                        <!-- Bars injected via JS -->
                     </div>
                 </div>
-            </div>
-        </div>
 
-        <!-- Array Statistics Panel -->
-        <div id="arrayStats" class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-8 transition-colors duration-300">
-            <h3 class="text-xl font-bold text-gray-800 dark:text-white mb-4">Array Statistics</h3>
-            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 text-center">
-                <div class="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
-                    <div class="text-sm text-gray-600 dark:text-gray-400">Elements</div>
-                    <div id="statElements" class="text-lg font-bold text-blue-600 dark:text-blue-400">0</div>
+                <!-- Array Info & Presets -->
+                <div class="glass-panel rounded-2xl p-5 shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300">
+                    <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
+                        <span class="text-warning">🗂️</span> Array Configuration
+                    </h3>
+                    <div class="flex flex-wrap gap-2 mb-4">
+                        <button id="presetReverse" class="px-3 py-1.5 bg-bgSoft hover:bg-white/10 border border-border rounded text-sm transition-colors text-textSoft hover:text-white">📉 Reverse</button>
+                        <button id="presetNearlySorted" class="px-3 py-1.5 bg-bgSoft hover:bg-white/10 border border-border rounded text-sm transition-colors text-textSoft hover:text-white">📈 Nearly Sorted</button>
+                        <button id="presetMountain" class="px-3 py-1.5 bg-bgSoft hover:bg-white/10 border border-border rounded text-sm transition-colors text-textSoft hover:text-white">⛰️ Mountain</button>
+                    </div>
+                    <div class="flex gap-2">
+                        <input type="text" id="customArrayInput" placeholder="Custom array (e.g. 5, 2, 9, 1)" class="flex-grow bg-bgSoft border border-border rounded-lg px-3 py-2 text-sm text-white focus:ring-1 focus:ring-accent outline-none">
+                        <button id="loadCustomBtn" class="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm transition-colors border border-border">Load</button>
+                    </div>
+                    <div id="inputError" class="text-danger text-xs mt-1 hidden"></div>
                 </div>
-                <div class="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg">
-                    <div class="text-sm text-gray-600 dark:text-gray-400">Min</div>
-                    <div id="statMin" class="text-lg font-bold text-green-600 dark:text-green-400">-</div>
-                </div>
-                <div class="bg-red-50 dark:bg-red-900/20 p-3 rounded-lg">
-                    <div class="text-sm text-gray-600 dark:text-gray-400">Max</div>
-                    <div id="statMax" class="text-lg font-bold text-red-600 dark:text-red-400">-</div>
-                </div>
-                <div class="bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded-lg">
-                    <div class="text-sm text-gray-600 dark:text-gray-400">Average</div>
-                    <div id="statAvg" class="text-lg font-bold text-yellow-600 dark:text-yellow-400">-</div>
-                </div>
-                <div class="bg-purple-50 dark:bg-purple-900/20 p-3 rounded-lg">
-                    <div class="text-sm text-gray-600 dark:text-gray-400">Median</div>
-                    <div id="statMedian" class="text-lg font-bold text-purple-600 dark:text-purple-400">-</div>
-                </div>
-                <div class="bg-orange-50 dark:bg-orange-900/20 p-3 rounded-lg">
-                    <div class="text-sm text-gray-600 dark:text-gray-400">Duplicates</div>
-                    <div id="statDuplicates" class="text-lg font-bold text-orange-600 dark:text-orange-400">0</div>
-                </div>
-            </div>
-            <div id="duplicatesList" class="mt-4 hidden">
-                <div class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Duplicate Values:</div>
-                <div id="duplicatesContent" class="text-sm text-gray-600 dark:text-gray-400"></div>
-            </div>
-        </div>
 
-        <!-- Visualization Area -->
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 transition-colors duration-300">
-            <div id="arrayContainer" class="flex items-end justify-center space-x-1 h-96 overflow-hidden">
-                <!-- Array bars will be generated here -->
             </div>
-        </div>
 
-        <!-- Algorithm Info -->
-        <div id="algorithmInfo" class="mt-8 bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 transition-colors duration-300">
-            <h3 class="text-xl font-bold text-gray-800 dark:text-white mb-3">Algorithm Information</h3>
-            <div id="algorithmDescription" class="text-gray-600 dark:text-gray-300">
-                Select an algorithm to see its description and complexity analysis.
+            <!-- Right Column: Learning & Code (Span 3) -->
+            <div class="lg:col-span-3 flex flex-col gap-6">
+                
+                <!-- Live Explanation Panel -->
+                <div class="glass-panel rounded-2xl shadow-xl flex flex-col h-64 hover:shadow-2xl hover:-translate-y-1 transition-all duration-300">
+                    <div class="p-4 border-b border-border bg-black/20 rounded-t-2xl flex items-center justify-between">
+                        <h3 class="text-sm font-semibold flex items-center gap-2">
+                            <span class="text-accent">🧠</span> Live Logic
+                        </h3>
+                        <span class="relative flex h-2 w-2">
+                          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
+                          <span class="relative inline-flex rounded-full h-2 w-2 bg-accent"></span>
+                        </span>
+                    </div>
+                    <div id="logContainer" class="p-4 flex-grow overflow-y-auto font-mono text-xs text-textSoft space-y-2">
+                        <div class="text-accent/70 italic">Waiting to start...</div>
+                    </div>
+                </div>
+
+                <!-- Pseudocode Panel -->
+                <div class="glass-panel rounded-2xl shadow-xl flex flex-col flex-grow min-h-[250px] hover:shadow-2xl hover:-translate-y-1 transition-all duration-300">
+                    <div class="p-4 border-b border-border bg-black/20 rounded-t-2xl">
+                        <h3 class="text-sm font-semibold flex items-center gap-2">
+                            <span class="text-accent2">📜</span> Pseudocode
+                        </h3>
+                    </div>
+                    <div class="p-4 flex-grow overflow-y-auto bg-[#0a0f1d]/50 rounded-b-2xl font-mono text-xs" id="pseudocodeContainer">
+                        <!-- Pseudocode injected via JS -->
+                    </div>
+                </div>
+
+                <!-- Algorithm Info Card -->
+                <div class="glass-panel rounded-2xl p-5 shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300" id="algorithmInfo">
+                    <!-- Info injected via JS -->
+                </div>
+
             </div>
         </div>
     </div>
 
+    <!-- Original AdvancedSortingVisualizer Logic (Adapted for new UI) -->
     <script>
+        const PSEUDOCODES = {
+            bubble: [
+                "for i = 0 to n - 1",
+                "  for j = 0 to n - i - 1",
+                "    if array[j] > array[j+1]",
+                "      swap(array[j], array[j+1])"
+            ],
+            selection: [
+                "for i = 0 to n - 1",
+                "  min_idx = i",
+                "  for j = i + 1 to n",
+                "    if array[j] < array[min_idx]",
+                "      min_idx = j",
+                "  swap(array[i], array[min_idx])"
+            ],
+            insertion: [
+                "for i = 1 to n - 1",
+                "  key = array[i]",
+                "  j = i - 1",
+                "  while j >= 0 and array[j] > key",
+                "    array[j+1] = array[j]",
+                "    j = j - 1",
+                "  array[j+1] = key"
+            ],
+            quick: [
+                "quickSort(arr, low, high):",
+                "  if low < high",
+                "    pi = partition(arr, low, high)",
+                "    quickSort(arr, low, pi - 1)",
+                "    quickSort(arr, pi + 1, high)",
+                "",
+                "partition(arr, low, high):",
+                "  pivot = arr[high]",
+                "  i = low - 1",
+                "  for j = low to high - 1",
+                "    if arr[j] < pivot",
+                "      i++",
+                "      swap(arr[i], arr[j])",
+                "  swap(arr[i + 1], arr[high])",
+                "  return i + 1"
+            ],
+            merge: [
+                "mergeSort(arr, l, r):",
+                "  if l < r",
+                "    m = l + (r - l) / 2",
+                "    mergeSort(arr, l, m)",
+                "    mergeSort(arr, m + 1, r)",
+                "    merge(arr, l, m, r)",
+                "",
+                "merge(arr, l, m, r):",
+                "  // Merge two halves in sorted order"
+            ],
+            heap: [
+                "heapSort(arr):",
+                "  for i = n / 2 - 1 down to 0",
+                "    heapify(arr, n, i)",
+                "  for i = n - 1 down to 1",
+                "    swap(arr[0], arr[i])",
+                "    heapify(arr, i, 0)",
+                "",
+                "heapify(arr, n, i):",
+                "  largest = i; left = 2*i + 1; right = 2*i + 2",
+                "  if left < n and arr[left] > arr[largest]",
+                "    largest = left",
+                "  if right < n and arr[right] > arr[largest]",
+                "    largest = right",
+                "  if largest != i",
+                "    swap(arr[i], arr[largest])",
+                "    heapify(arr, n, largest)"
+            ],
+            radix: [
+                "radixSort(arr):",
+                "  max = getMax(arr)",
+                "  for exp = 1; max / exp > 0; exp *= 10",
+                "    countingSort(arr, exp)"
+            ]
+        };
+
         class AdvancedSortingVisualizer {
             constructor() {
                 this.array = [];
@@ -270,12 +476,12 @@
                 this.swaps = 0;
                 this.startTime = 0;
                 this.timeInterval = null;
-                this.duplicateIndices = new Map();
                 
-                // Step-by-step mode properties
                 this.stepMode = false;
-                this.stepPaused = true;
-                this.currentStepInfo = '';
+                this.stepPaused = false;
+                this.history = [];
+                this.historyIndex = -1;
+                this.stepResolve = null;
 
                 this.initializeElements();
                 this.setupEventListeners();
@@ -291,48 +497,32 @@
                 this.arraySizeValue = document.getElementById('arraySizeValue');
                 this.generateBtn = document.getElementById('generateBtn');
                 this.sortBtn = document.getElementById('sortBtn');
-                this.darkModeToggle = document.getElementById('darkModeToggle');
                 this.soundToggle = document.getElementById('soundToggle');
                 this.showValuesToggle = document.getElementById('showValuesToggle');
+                document.getElementById('showValuesIcon').textContent = '🔢';
+                this.showValuesToggle.classList.add('bg-white/20');
+                
                 this.comparisonsEl = document.getElementById('comparisons');
                 this.swapsEl = document.getElementById('swaps');
                 this.timeElapsedEl = document.getElementById('timeElapsed');
-                this.algorithmDescription = document.getElementById('algorithmDescription');
+                
+                this.algorithmInfo = document.getElementById('algorithmInfo');
+                this.logContainer = document.getElementById('logContainer');
+                this.pseudocodeContainer = document.getElementById('pseudocodeContainer');
+                
                 this.customArrayInput = document.getElementById('customArrayInput');
                 this.loadCustomBtn = document.getElementById('loadCustomBtn');
-                this.clearInputBtn = document.getElementById('clearInputBtn');
                 this.inputError = document.getElementById('inputError');
 
-                // Step mode elements
                 this.stepModeToggle = document.getElementById('stepModeToggle');
                 this.stepControls = document.getElementById('stepControls');
                 this.stepPrevBtn = document.getElementById('stepPrevBtn');
                 this.stepNextBtn = document.getElementById('stepNextBtn');
-                this.stepPlayBtn = document.getElementById('stepPlayBtn');
                 this.stepPauseBtn = document.getElementById('stepPauseBtn');
-                this.stepResetBtn = document.getElementById('stepResetBtn');
-                this.stepInfo = document.getElementById('stepInfo');
-                this.currentStep = document.getElementById('currentStep');
 
-                // Statistics elements
-                this.statElements = document.getElementById('statElements');
-                this.statMin = document.getElementById('statMin');
-                this.statMax = document.getElementById('statMax');
-                this.statAvg = document.getElementById('statAvg');
-                this.statMedian = document.getElementById('statMedian');
-                this.statDuplicates = document.getElementById('statDuplicates');
-                this.duplicatesList = document.getElementById('duplicatesList');
-                this.duplicatesContent = document.getElementById('duplicatesContent');
-
-                // Preset buttons
-                this.presetButtons = {
-                    random: document.getElementById('presetRandom'),
-                    reverse: document.getElementById('presetReverse'),
-                    nearlySorted: document.getElementById('presetNearlySorted'),
-                    fewUnique: document.getElementById('presetFewUnique'),
-                    mountain: document.getElementById('presetMountain'),
-                    valley: document.getElementById('presetValley')
-                };
+                this.presetReverse = document.getElementById('presetReverse');
+                this.presetNearlySorted = document.getElementById('presetNearlySorted');
+                this.presetMountain = document.getElementById('presetMountain');
             }
 
             setupEventListeners() {
@@ -358,18 +548,16 @@
                     if (!this.isSort) this.startSorting();
                 });
 
-                this.darkModeToggle.addEventListener('click', () => {
-                    document.documentElement.classList.toggle('dark');
-                });
-
                 this.soundToggle.addEventListener('click', () => {
                     this.soundEnabled = !this.soundEnabled;
                     document.getElementById('soundIcon').textContent = this.soundEnabled ? '🔊' : '🔇';
+                    this.soundToggle.classList.toggle('bg-white/20', this.soundEnabled);
                 });
 
                 this.showValuesToggle.addEventListener('click', () => {
                     this.showValues = !this.showValues;
                     document.getElementById('showValuesIcon').textContent = this.showValues ? '🔢' : '📊';
+                    this.showValuesToggle.classList.toggle('bg-white/20', this.showValues);
                     this.renderArray();
                 });
 
@@ -377,426 +565,166 @@
                     if (!this.isSort) this.loadCustomArray();
                 });
 
-                this.clearInputBtn.addEventListener('click', () => {
-                    this.customArrayInput.value = '';
-                    this.hideInputError();
+                this.presetReverse.addEventListener('click', () => {
+                    if (!this.isSort) this.loadPreset('reverse');
+                });
+                this.presetNearlySorted.addEventListener('click', () => {
+                    if (!this.isSort) this.loadPreset('nearlySorted');
+                });
+                this.presetMountain.addEventListener('click', () => {
+                    if (!this.isSort) this.loadPreset('mountain');
                 });
 
-                this.customArrayInput.addEventListener('keypress', (e) => {
-                    if (e.key === 'Enter' && !this.isSort) {
-                        this.loadCustomArray();
+                this.stepModeToggle.addEventListener('click', () => {
+                    this.stepMode = !this.stepMode;
+                    if (this.stepMode) {
+                        this.stepModeToggle.innerHTML = '🎯 Disable Step Mode';
+                        this.stepModeToggle.classList.replace('bg-purpleUi/20', 'bg-danger/20');
+                        this.stepModeToggle.classList.replace('text-purple-300', 'text-red-400');
+                        this.stepControls.classList.remove('hidden');
+                        this.stepControls.classList.add('grid');
+                        this.addLog("Step mode enabled.", "info");
+                    } else {
+                        this.stepModeToggle.innerHTML = '🎯 Enable Step Mode';
+                        this.stepModeToggle.classList.replace('bg-danger/20', 'bg-purpleUi/20');
+                        this.stepModeToggle.classList.replace('text-red-400', 'text-purple-300');
+                        this.stepControls.classList.add('hidden');
+                        this.stepControls.classList.remove('grid');
+                        this.stepPaused = false;
+                this.history = [];
+                this.historyIndex = -1;
+                        if(this.stepResolve) {
+                            this.stepResolve();
+                            this.stepResolve = null;
+                        }
                     }
                 });
 
-                this.customArrayInput.addEventListener('input', () => {
-                    this.hideInputError();
-                });
+                this.updatePauseButton = () => {
+                    if (this.stepPaused) {
+                        this.stepPauseBtn.innerHTML = '▶️ Resume';
+                        this.stepPauseBtn.classList.replace('bg-warning/20', 'bg-success/20');
+                        this.stepPauseBtn.classList.replace('text-warning', 'text-success');
+                    } else {
+                        this.stepPauseBtn.innerHTML = '⏸️ Pause';
+                        this.stepPauseBtn.classList.replace('bg-success/20', 'bg-warning/20');
+                        this.stepPauseBtn.classList.replace('text-success', 'text-warning');
+                    }
+                };
 
-                // Step mode listeners
-                this.stepModeToggle.addEventListener('click', () => {
-                    this.toggleStepMode();
+                this.stepPauseBtn.addEventListener('click', () => {
+                    this.stepPaused = !this.stepPaused;
+                    this.updatePauseButton();
+                    
+                    if (this.stepPaused) {
+                        this.addLog("Paused.", "warning");
+                    } else {
+                        this.addLog("Resumed.", "success");
+                        // If we are looking at history, snap back to present
+                        if (this.history.length > 0 && this.historyIndex < this.history.length - 1) {
+                            this.historyIndex = this.history.length - 1;
+                            this.renderState(this.history[this.historyIndex]);
+                        }
+                        if (this.stepResolve) {
+                            this.stepResolve();
+                            this.stepResolve = null;
+                        }
+                    }
                 });
 
                 this.stepPrevBtn.addEventListener('click', () => {
-                    this.updateStepInfo('Previous step functionality coming soon...');
-                });
-
-                this.stepNextBtn.addEventListener('click', () => {
-                    this.updateStepInfo('Next step functionality coming soon...');
-                });
-
-                this.stepPlayBtn.addEventListener('click', () => {
-                    this.updateStepInfo('Auto-play in step mode...');
-                });
-
-                this.stepPauseBtn.addEventListener('click', () => {
-                    this.updateStepInfo('Paused step mode');
-                });
-
-                this.stepResetBtn.addEventListener('click', () => {
-                    if (!this.isSort) {
-                        this.array = [...this.originalArray];
-                        this.renderArray();
-                        this.resetStats();
-                        this.updateStepInfo('Reset to original array');
+                    if (this.history.length > 0 && this.historyIndex > 0) {
+                        this.historyIndex--;
+                        this.renderState(this.history[this.historyIndex]);
+                        if (!this.stepPaused && this.isSort) {
+                            this.stepPaused = true;
+                            this.updatePauseButton();
+                        }
                     }
                 });
 
-                // Preset array listeners
-                Object.entries(this.presetButtons).forEach(([type, button]) => {
-                    button.addEventListener('click', () => {
-                        if (!this.isSort) this.loadPresetArray(type);
-                    });
+                this.stepNextBtn.addEventListener('click', () => {
+                    if (this.history.length > 0 && this.historyIndex < this.history.length - 1) {
+                        this.historyIndex++;
+                        this.renderState(this.history[this.historyIndex]);
+                    } else if (this.stepPaused && this.stepResolve && this.historyIndex === this.history.length - 1) {
+                        this.stepResolve();
+                        this.stepResolve = null;
+                    }
                 });
+
+                // old stepNextBtn removed
+
+                document.getElementById('closeModalBtn').addEventListener('click', () => {
+                    const modal = document.getElementById('successModal');
+                    modal.classList.remove('opacity-100');
+                    setTimeout(() => modal.classList.add('hidden'), 300);
+                });
+            }
+
+            loadPreset(type) {
+                this.array = [];
+                for (let i = 0; i < this.arraySize; i++) {
+                    if (type === 'reverse') {
+                        this.array.push(Math.floor(((this.arraySize - i) / this.arraySize) * 90) + 10);
+                    } else if (type === 'nearlySorted') {
+                        this.array.push(Math.floor((i / this.arraySize) * 90) + 10);
+                    } else if (type === 'mountain') {
+                        const mid = this.arraySize / 2;
+                        const dist = Math.abs(i - mid);
+                        this.array.push(100 - Math.floor((dist / mid) * 90));
+                    }
+                }
+                if (type === 'nearlySorted') {
+                    for (let i = 0; i < this.arraySize * 0.1; i++) {
+                        const i1 = Math.floor(Math.random() * this.arraySize);
+                        const i2 = Math.floor(Math.random() * this.arraySize);
+                        [this.array[i1], this.array[i2]] = [this.array[i2], this.array[i1]];
+                    }
+                }
+                this.originalArray = [...this.array];
+                this.resetStats();
+                this.renderArray();
+                this.addLog(`Loaded ${type} preset.`, 'info');
+            }
+
+            loadCustomArray() {
+                const input = this.customArrayInput.value.trim();
+                if (!input) return;
+                try {
+                    const nums = input.split(',').map(s => {
+                        const n = parseFloat(s.trim());
+                        if (isNaN(n)) throw new Error("Invalid number");
+                        return n;
+                    });
+                    if (nums.length < 2) throw new Error("Need at least 2 numbers");
+                    if (nums.length > 100) throw new Error("Max 100 numbers");
+                    
+                    this.array = nums;
+                    this.arraySize = nums.length;
+                    this.arraySizeSlider.value = this.arraySize;
+                    this.arraySizeValue.textContent = this.arraySize;
+                    this.originalArray = [...this.array];
+                    this.inputError.classList.add('hidden');
+                    this.resetStats();
+                    this.renderArray();
+                    this.addLog("Custom array loaded.", "info");
+                } catch (e) {
+                    this.inputError.textContent = e.message;
+                    this.inputError.classList.remove('hidden');
+                }
             }
 
             generateArray() {
                 this.array = [];
                 this.resetStats();
-                
                 for (let i = 0; i < this.arraySize; i++) {
                     this.array.push(Math.floor(Math.random() * 90) + 10);
                 }
-                
                 this.originalArray = [...this.array];
-                this.customArrayInput.value = '';
-                this.hideInputError();
-                this.updateArrayStatistics();
                 this.renderArray();
-                
-                if (this.stepMode) {
-                    this.updateStepInfo("Array generated. Ready to start sorting...");
-                }
-            }
-
-            loadPresetArray(type) {
-                this.array = [];
-                this.resetStats();
-
-                switch (type) {
-                    case 'random':
-                        this.generateArray();
-                        return;
-                    
-                    case 'reverse':
-                        for (let i = this.arraySize; i > 0; i--) {
-                            this.array.push(Math.floor(i * 90 / this.arraySize) + 10);
-                        }
-                        break;
-                    
-                    case 'nearlySorted':
-                        for (let i = 1; i <= this.arraySize; i++) {
-                            this.array.push(Math.floor(i * 90 / this.arraySize) + 10);
-                        }
-                        // Shuffle a few elements
-                        for (let i = 0; i < Math.floor(this.arraySize * 0.1); i++) {
-                            const idx1 = Math.floor(Math.random() * this.arraySize);
-                            const idx2 = Math.floor(Math.random() * this.arraySize);
-                            [this.array[idx1], this.array[idx2]] = [this.array[idx2], this.array[idx1]];
-                        }
-                        break;
-                    
-                    case 'fewUnique':
-                        const uniqueValues = [20, 40, 60, 80, 100];
-                        for (let i = 0; i < this.arraySize; i++) {
-                            this.array.push(uniqueValues[Math.floor(Math.random() * uniqueValues.length)]);
-                        }
-                        break;
-                    
-                    case 'mountain':
-                        const mid = Math.floor(this.arraySize / 2);
-                        for (let i = 0; i < this.arraySize; i++) {
-                            const distance = Math.abs(i - mid);
-                            this.array.push(Math.max(10, 100 - distance * 3));
-                        }
-                        break;
-                    
-                    case 'valley':
-                        const center = Math.floor(this.arraySize / 2);
-                        for (let i = 0; i < this.arraySize; i++) {
-                            const distance = Math.abs(i - center);
-                            this.array.push(Math.min(100, 10 + distance * 3));
-                        }
-                        break;
-                }
-
-                this.originalArray = [...this.array];
-                this.customArrayInput.value = '';
-                this.hideInputError();
-                this.updateArrayStatistics();
-                this.renderArray();
-                this.showSuccessMessage(`Loaded ${type} preset array!`);
-                
-                if (this.stepMode) {
-                    this.updateStepInfo(`Loaded ${type} array. Ready to start sorting...`);
-                }
-            }
-
-            loadCustomArray() {
-                const input = this.customArrayInput.value.trim();
-                
-                if (!input) {
-                    this.showInputError('Please enter some numbers');
-                    return;
-                }
-                
-                try {
-                    const numbers = input.split(',').map(str => {
-                        const num = parseFloat(str.trim());
-                        if (isNaN(num)) {
-                            throw new Error(`"${str.trim()}" is not a valid number`);
-                        }
-                        return num;
-                    });
-                    
-                    const validation = this.validateCustomArray(numbers);
-                    if (!validation.isValid) {
-                        this.showInputError(validation.error);
-                        return;
-                    }
-                    
-                    this.array = numbers.map(num => {
-                        return Math.max(10, Math.min(100, Math.abs(num)));
-                    });
-                    
-                    this.arraySize = this.array.length;
-                    this.arraySizeSlider.value = this.arraySize;
-                    this.arraySizeValue.textContent = this.arraySize;
-                    this.originalArray = [...this.array];
-                    
-                    this.resetStats();
-                    this.updateArrayStatistics();
-                    this.renderArray();
-                    this.hideInputError();
-                    
-                    this.showSuccessMessage(`Loaded ${this.array.length} numbers successfully!`);
-                    
-                    if (this.stepMode) {
-                        this.updateStepInfo(`Loaded custom array. Ready to start sorting...`);
-                    }
-                    
-                } catch (error) {
-                    this.showInputError(error.message);
-                }
-            }
-
-            validateCustomArray(numbers) {
-                if (numbers.length === 0) {
-                    return { isValid: false, error: 'Array cannot be empty' };
-                }
-                
-                if (numbers.length > 100) {
-                    return { isValid: false, error: 'Maximum 100 numbers allowed' };
-                }
-                
-                if (numbers.length < 2) {
-                    return { isValid: false, error: 'At least 2 numbers required for sorting' };
-                }
-                
-                return { isValid: true };
-            }
-
-            updateArrayStatistics() {
-                const stats = this.calculateStatistics();
-                
-                this.statElements.textContent = stats.count;
-                this.statMin.textContent = stats.min;
-                this.statMax.textContent = stats.max;
-                this.statAvg.textContent = stats.avg.toFixed(1);
-                this.statMedian.textContent = stats.median;
-                this.statDuplicates.textContent = stats.duplicateCount;
-
-                if (stats.duplicateCount > 0) {
-                    this.duplicatesList.classList.remove('hidden');
-                    this.duplicatesContent.textContent = stats.duplicateValues.join(', ');
-                } else {
-                    this.duplicatesList.classList.add('hidden');
-                }
-
-                this.updateDuplicateHighlighting();
-            }
-
-            calculateStatistics() {
-                if (this.array.length === 0) {
-                    return {
-                        count: 0, min: '-', max: '-', avg: 0, median: '-',
-                        duplicateCount: 0, duplicateValues: []
-                    };
-                }
-
-                const sorted = [...this.array].sort((a, b) => a - b);
-                const count = this.array.length;
-                const min = sorted[0];
-                const max = sorted[count - 1];
-                const avg = this.array.reduce((sum, val) => sum + val, 0) / count;
-                const median = count % 2 === 0 
-                    ? (sorted[count / 2 - 1] + sorted[count / 2]) / 2
-                    : sorted[Math.floor(count / 2)];
-
-                // Find duplicates
-                const valueCount = {};
-                const duplicateValues = [];
-                let duplicateCount = 0;
-
-                this.array.forEach(val => {
-                    valueCount[val] = (valueCount[val] || 0) + 1;
-                });
-
-                Object.entries(valueCount).forEach(([value, count]) => {
-                    if (count > 1) {
-                        duplicateValues.push(parseInt(value));
-                        duplicateCount += count - 1;
-                    }
-                });
-
-                return {
-                    count, min, max, avg, median,
-                    duplicateCount, duplicateValues: duplicateValues.sort((a, b) => a - b)
-                };
-            }
-
-            updateDuplicateHighlighting() {
-                this.duplicateIndices.clear();
-
-                const valueIndices = {};
-                this.array.forEach((value, index) => {
-                    if (!valueIndices[value]) {
-                        valueIndices[value] = [];
-                    }
-                    valueIndices[value].push(index);
-                });
-
-                Object.entries(valueIndices).forEach(([value, indices]) => {
-                    if (indices.length > 1) {
-                        this.duplicateIndices.set(parseInt(value), indices);
-                    }
-                });
-            }
-
-            renderArray() {
-                this.arrayContainer.innerHTML = '';
-                const containerWidth = this.arrayContainer.clientWidth;
-                const barWidth = Math.max(2, (containerWidth - this.arraySize * 2) / this.arraySize);
-
-                this.array.forEach((value, index) => {
-                    const barContainer = document.createElement('div');
-                    barContainer.className = 'relative flex flex-col items-center';
-                    barContainer.style.width = `${barWidth}px`;
-
-                    const bar = document.createElement('div');
-                    
-                    // Check if this is a duplicate value
-                    const isDuplicate = Array.from(this.duplicateIndices.values())
-                        .some(indices => indices.includes(index));
-                    
-                    if (isDuplicate) {
-                        bar.className = 'bg-gradient-to-t from-orange-400 to-orange-600 dark:from-orange-500 dark:to-orange-700 transition-all duration-300 rounded-t-sm border-2 border-orange-300 dark:border-orange-400';
-                    } else {
-                        bar.className = 'bg-gradient-to-t from-blue-400 to-blue-600 dark:from-blue-500 dark:to-blue-700 transition-all duration-300 rounded-t-sm';
-                    }
-                    
-                    bar.style.height = `${value * 3}px`;
-                    bar.style.width = '100%';
-                    bar.id = `bar-${index}`;
-                    bar.title = `Value: ${value}${isDuplicate ? ' (Duplicate)' : ''}`;
-
-                    // Add value label if enabled
-                    if (this.showValues) {
-                        const label = document.createElement('div');
-                        label.className = 'text-xs font-bold text-gray-800 dark:text-white mt-1 text-center';
-                        label.style.fontSize = Math.max(8, Math.min(12, barWidth / 3)) + 'px';
-                        label.textContent = value;
-                        label.id = `label-${index}`;
-                        barContainer.appendChild(label);
-                    }
-
-                    barContainer.appendChild(bar);
-                    this.arrayContainer.appendChild(barContainer);
-                });
-            }
-
-            async highlightBars(indices, color = 'bg-gradient-to-t from-yellow-400 to-yellow-600') {
-                indices.forEach(index => {
-                    const bar = document.getElementById(`bar-${index}`);
-                    if (bar) {
-                        bar.className = `${color} transition-all duration-300 rounded-t-sm animate-pulse-slow`;
-                    }
-                });
-            }
-
-            async resetBarColors(indices) {
-                indices.forEach(index => {
-                    const bar = document.getElementById(`bar-${index}`);
-                    if (bar) {
-                        const isDuplicate = Array.from(this.duplicateIndices.values())
-                            .some(indicesArray => indicesArray.includes(index));
-                        
-                        if (isDuplicate) {
-                            bar.className = 'bg-gradient-to-t from-orange-400 to-orange-600 dark:from-orange-500 dark:to-orange-700 transition-all duration-300 rounded-t-sm border-2 border-orange-300 dark:border-orange-400';
-                        } else {
-                            bar.className = 'bg-gradient-to-t from-blue-400 to-blue-600 dark:from-blue-500 dark:to-blue-700 transition-all duration-300 rounded-t-sm';
-                        }
-                    }
-                });
-            }
-
-            async markAsSorted(indices) {
-                indices.forEach(index => {
-                    const bar = document.getElementById(`bar-${index}`);
-                    if (bar) {
-                        bar.className = 'bg-gradient-to-t from-green-400 to-green-600 transition-all duration-300 rounded-t-sm';
-                    }
-                });
-            }
-
-            async swap(i, j) {
-                if (this.soundEnabled) this.playSwapSound();
-                
-                await this.highlightBars([i, j], 'bg-gradient-to-t from-red-400 to-red-600');
-                await this.sleep(this.speed);
-                
-                [this.array[i], this.array[j]] = [this.array[j], this.array[i]];
-                
-                const bar1 = document.getElementById(`bar-${i}`);
-                const bar2 = document.getElementById(`bar-${j}`);
-                if (bar1 && bar2) {
-                    bar1.style.height = `${this.array[i] * 3}px`;
-                    bar2.style.height = `${this.array[j] * 3}px`;
-                    
-                    // Update value labels if they exist
-                    if (this.showValues) {
-                        const label1 = document.getElementById(`label-${i}`);
-                        const label2 = document.getElementById(`label-${j}`);
-                        
-                        if (label1) label1.textContent = this.array[i];
-                        if (label2) label2.textContent = this.array[j];
-                    }
-                    
-                    bar1.classList.add('animate-bounce-subtle');
-                    bar2.classList.add('animate-bounce-subtle');
-                }
-                
-                this.swaps++;
-                this.swapsEl.textContent = this.swaps;
-                
-                await this.sleep(this.speed);
-                await this.resetBarColors([i, j]);
-            }
-
-            async compare(i, j) {
-                this.comparisons++;
-                this.comparisonsEl.textContent = this.comparisons;
-                await this.highlightBars([i, j], 'bg-gradient-to-t from-purple-400 to-purple-600');
-                await this.sleep(this.speed / 2);
-                await this.resetBarColors([i, j]);
-                return this.array[i] > this.array[j];
-            }
-
-            sleep(ms) {
-                return new Promise(resolve => setTimeout(resolve, ms));
-            }
-
-            playSwapSound() {
-                if (!this.soundEnabled) return;
-                try {
-                    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                    const oscillator = audioContext.createOscillator();
-                    const gainNode = audioContext.createGain();
-                    
-                    oscillator.connect(gainNode);
-                    gainNode.connect(audioContext.destination);
-                    
-                    oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
-                    oscillator.frequency.exponentialRampToValueAtTime(400, audioContext.currentTime + 0.1);
-                    
-                    gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
-                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
-                    
-                    oscillator.start(audioContext.currentTime);
-                    oscillator.stop(audioContext.currentTime + 0.1);
-                } catch (error) {
-                    // Silently fail if audio context is not available
-                }
+                this.clearLogs();
+                this.addLog("Generated new array. Ready to sort.", "info");
             }
 
             resetStats() {
@@ -804,7 +732,7 @@
                 this.swaps = 0;
                 this.comparisonsEl.textContent = '0';
                 this.swapsEl.textContent = '0';
-                this.timeElapsedEl.textContent = '0s';
+                this.timeElapsedEl.textContent = '0.0s';
                 if (this.timeInterval) {
                     clearInterval(this.timeInterval);
                     this.timeInterval = null;
@@ -814,478 +742,661 @@
             startTimer() {
                 this.startTime = Date.now();
                 this.timeInterval = setInterval(() => {
-                    const elapsed = Math.floor((Date.now() - this.startTime) / 1000);
+                    const elapsed = ((Date.now() - this.startTime) / 1000).toFixed(1);
                     this.timeElapsedEl.textContent = `${elapsed}s`;
-                }, 1000);
+                }, 100);
             }
 
             stopTimer() {
-                if (this.timeInterval) {
-                    clearInterval(this.timeInterval);
-                    this.timeInterval = null;
-                }
+                if (this.timeInterval) clearInterval(this.timeInterval);
             }
 
-            toggleStepMode() {
-                this.stepMode = !this.stepMode;
+            getMaxVal() {
+                return Math.max(...this.originalArray, 1);
+            }
+
+            renderArray() {
+                this.arrayContainer.innerHTML = '';
+                const containerWidth = this.arrayContainer.clientWidth;
+                const barWidth = Math.max(2, (containerWidth - this.arraySize * 2) / this.arraySize);
+
+                this.array.forEach((value, index) => {
+                    const barContainer = document.createElement('div');
+                    barContainer.className = 'flex flex-col items-center justify-end h-full';
+                    barContainer.style.width = `${barWidth}px`;
+
+                    const bar = document.createElement('div');
+                    bar.className = 'w-full bg-gradient-to-t from-accent to-blue-500 rounded-t-sm transition-all duration-200 relative group';
+                    const maxVal = this.getMaxVal();
+                    const heightPercent = Math.max(5, (value / maxVal) * 100);
+                    bar.style.height = `${heightPercent}%`;
+                    bar.id = `bar-${index}`;
+                    
+                    // Tooltip
+                    const tooltip = document.createElement('div');
+                    tooltip.className = 'absolute -top-6 left-1/2 -translate-x-1/2 bg-black/80 text-white text-[10px] py-0.5 px-1.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 pointer-events-none hidden md:block tooltip-text';
+                    tooltip.textContent = value;
+                    bar.appendChild(tooltip);
+
+                    if (this.showValues || barWidth > 20) {
+                        const label = document.createElement('div');
+                        label.className = 'text-[12px] font-bold text-white mb-1 absolute -top-5 w-full text-center truncate drop-shadow-md z-10 pointer-events-none';
+                        label.textContent = value;
+                        label.id = `label-${index}`;
+                        barContainer.appendChild(label);
+                        
+                        // Also put the value inside the bar if it's tall enough
+                        const innerLabel = document.createElement('div');
+                        innerLabel.className = 'text-[10px] font-bold text-white/90 text-center w-full absolute bottom-2 pointer-events-none';
+                        innerLabel.textContent = value;
+                        bar.appendChild(innerLabel);
+                    }
+
+                    barContainer.appendChild(bar);
+                    this.arrayContainer.appendChild(barContainer);
+                });
+            }
+
+            updateAlgorithmInfo() {
+                const alg = this.algorithmSelect.value;
+                const info = {
+                    bubble: { name: "Bubble Sort", desc: "Repeatedly steps through the list, compares adjacent elements and swaps them if they are in the wrong order.", tc: "O(n²)", sc: "O(1)" },
+                    selection: { name: "Selection Sort", desc: "Sorts an array by repeatedly finding the minimum element from unsorted part and putting it at the beginning.", tc: "O(n²)", sc: "O(1)" },
+                    insertion: { name: "Insertion Sort", desc: "Builds the final sorted array one item at a time. It is much less efficient on large lists than more advanced algorithms such as quicksort.", tc: "O(n²)", sc: "O(1)" },
+                    quick: { name: "Quick Sort", desc: "Divide and conquer algorithm. Picks an element as pivot and partitions the given array around the picked pivot.", tc: "O(n log n)", sc: "O(log n)" },
+                    merge: { name: "Merge Sort", desc: "Divide and conquer algorithm that divides array into two halves, calls itself for the two halves, and then merges the two sorted halves.", tc: "O(n log n)", sc: "O(n)" },
+                    heap: { name: "Heap Sort", desc: "Comparison based sorting technique based on Binary Heap data structure.", tc: "O(n log n)", sc: "O(1)" },
+                    radix: { name: "Radix Sort", desc: "Sorts data with integer keys by grouping keys by the individual digits which share the same significant position and value.", tc: "O(nk)", sc: "O(n+k)" }
+                }[alg];
+
+                this.algorithmInfo.innerHTML = `
+                    <h3 class="text-sm font-semibold mb-2 flex items-center gap-2"><span class="text-info">📚</span> ${info.name}</h3>
+                    <p class="text-xs text-textSoft mb-3">${info.desc}</p>
+                    <div class="grid grid-cols-2 gap-2 text-xs">
+                        <div class="bg-bgSoft p-2 rounded border border-border/50">
+                            <span class="text-textSoft block mb-0.5">Time</span>
+                            <span class="text-accent font-mono">${info.tc}</span>
+                        </div>
+                        <div class="bg-bgSoft p-2 rounded border border-border/50">
+                            <span class="text-textSoft block mb-0.5">Space</span>
+                            <span class="text-success font-mono">${info.sc}</span>
+                        </div>
+                    </div>
+                `;
+
+                // Render Pseudocode
+                const code = PSEUDOCODES[alg];
+                this.pseudocodeContainer.innerHTML = code.map((line, i) => `
+                    <div id="code-${i}" class="px-2 py-1 rounded transition-colors whitespace-pre">${line.replace(/([a-zA-Z]+)(?=\()/g, '<span class="token-function">$1</span>').replace(/\b(for|while|if|else|return|down to|to)\b/g, '<span class="token-keyword">$1</span>')}</div>
+                `).join('');
+            }
+
+            recordState() {
+                const colors = [];
+                for (let i = 0; i < this.arraySize; i++) {
+                    const bar = document.getElementById(`bar-${i}`);
+                    colors.push(bar ? bar.className : '');
+                }
+                const activeEl = document.querySelector('.active-line');
+                const state = {
+                    array: [...this.array],
+                    colors: colors,
+                    comparisons: this.comparisons,
+                    swaps: this.swaps,
+                    logs: this.logContainer.innerHTML,
+                    activeCode: activeEl ? activeEl.id : null
+                };
                 
-                if (this.stepMode) {
-                    this.stepModeToggle.textContent = '🎯 Disable Step Mode';
-                    this.stepModeToggle.classList.remove('bg-indigo-500', 'hover:bg-indigo-600');
-                    this.stepModeToggle.classList.add('bg-red-500', 'hover:bg-red-600');
-                    this.stepControls.classList.remove('hidden');
-                    this.stepInfo.classList.remove('hidden');
-                    this.updateStepInfo('Step mode enabled. Use controls to navigate through sorting steps.');
-                } else {
-                    this.stepModeToggle.textContent = '🎯 Enable Step Mode';
-                    this.stepModeToggle.classList.remove('bg-red-500', 'hover:bg-red-600');
-                    this.stepModeToggle.classList.add('bg-indigo-500', 'hover:bg-indigo-600');
-                    this.stepControls.classList.add('hidden');
-                    this.stepInfo.classList.add('hidden');
+                // If we went back in time and then advanced, we should ideally truncate history,
+                // but since we only allow advancing algorithm from the present, it's fine.
+                this.history.push(state);
+                this.historyIndex = this.history.length - 1;
+            }
+
+            renderState(state) {
+                if (!state) return;
+                this.array = [...state.array];
+                const maxVal = this.getMaxVal();
+                for (let i = 0; i < this.arraySize; i++) {
+                    const bar = document.getElementById(`bar-${i}`);
+                    if (bar) {
+                        bar.className = state.colors[i];
+                        const heightPercent = Math.max(5, (this.array[i] / maxVal) * 100);
+                        bar.style.height = `${heightPercent}%`;
+                        
+                        const label = document.getElementById(`label-${i}`);
+                        if (label) label.textContent = this.array[i];
+                        
+                        // Handle inner labels if they exist
+                        const innerLabel = bar.querySelector('.text-center.w-full.absolute.bottom-2');
+                        if (innerLabel) innerLabel.textContent = this.array[i];
+                        
+                        const tooltip = bar.querySelector('.tooltip-text');
+                        if (tooltip) tooltip.textContent = this.array[i];
+                    }
+                }
+                
+                this.comparisons = state.comparisons;
+                this.swaps = state.swaps;
+                this.comparisonsEl.textContent = this.comparisons;
+                this.swapsEl.textContent = this.swaps;
+                
+                this.logContainer.innerHTML = state.logs;
+                this.logContainer.scrollTop = this.logContainer.scrollHeight;
+                
+                document.querySelectorAll('#pseudocodeContainer > div').forEach(el => el.classList.remove('active-line'));
+                if (state.activeCode) {
+                    const activeEl = document.getElementById(state.activeCode);
+                    if (activeEl) {
+                        activeEl.classList.add('active-line');
+                        activeEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }
                 }
             }
 
-            updateStepInfo(info) {
-                this.currentStepInfo = info;
-                if (this.currentStep) {
-                    this.currentStep.textContent = info;
+            addLog(msg, type="normal") {
+                const div = document.createElement('div');
+                div.className = `py-1 border-b border-border/30 ${type==='warning'?'text-warning':type==='success'?'text-success':type==='info'?'text-accent':'text-textSoft'}`;
+                div.innerHTML = `<span class="opacity-50 mr-2">${new Date().toLocaleTimeString().split(' ')[0]}</span> ${msg}`;
+                this.logContainer.appendChild(div);
+                this.logContainer.scrollTop = this.logContainer.scrollHeight;
+            }
+            clearLogs() {
+                this.logContainer.innerHTML = '';
+            }
+
+            highlightCode(lineIndex) {
+                document.querySelectorAll('#pseudocodeContainer > div').forEach(el => el.classList.remove('active-line'));
+                const el = document.getElementById(`code-${lineIndex}`);
+                if(el) {
+                    el.classList.add('active-line');
+                    el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                 }
+            }
+
+            async checkStepPause() {
+                if(this.stepMode && this.stepPaused) {
+                    await new Promise(resolve => this.stepResolve = resolve);
+                }
+            }
+
+            async sleep(ms) {
+                this.recordState();
+                await this.checkStepPause();
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+
+            playBeep(freq, type='square') {
+                if (!this.soundEnabled) return;
+                try {
+                    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = type;
+                    osc.frequency.setValueAtTime(freq, ctx.currentTime);
+                    gain.gain.setValueAtTime(0.05, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.1);
+                } catch(e){}
+            }
+
+            async highlightBars(indices, colorClass) {
+                indices.forEach(idx => {
+                    const bar = document.getElementById(`bar-${idx}`);
+                    if(bar) bar.className = `w-full rounded-t-sm transition-all duration-200 ${colorClass}`;
+                });
+            }
+
+            async resetBarColors(indices) {
+                indices.forEach(idx => {
+                    const bar = document.getElementById(`bar-${idx}`);
+                    if(bar) bar.className = 'w-full bg-gradient-to-t from-accent to-blue-500 rounded-t-sm transition-all duration-200 relative group';
+                });
+            }
+
+            async compare(i, j) {
+                this.comparisons++;
+                this.comparisonsEl.textContent = this.comparisons;
+                this.playBeep(400, 'sine');
+                await this.highlightBars([i, j], 'bg-warning shadow-[0_0_10px_#facc15]');
+                this.addLog(`Comparing index ${i} (${this.array[i]}) and ${j} (${this.array[j]})`);
+                await this.sleep(this.speed);
+                await this.resetBarColors([i, j]);
+                return this.array[i] > this.array[j];
+            }
+
+            async swap(i, j) {
+                this.swaps++;
+                this.swapsEl.textContent = this.swaps;
+                this.playBeep(600, 'square');
+                this.addLog(`Swapping ${this.array[i]} and ${this.array[j]}`, 'warning');
+                
+                await this.highlightBars([i, j], 'bg-danger shadow-[0_0_15px_#ef4444]');
+                
+                [this.array[i], this.array[j]] = [this.array[j], this.array[i]];
+                
+                const b1 = document.getElementById(`bar-${i}`);
+                const b2 = document.getElementById(`bar-${j}`);
+                if(b1 && b2) {
+                    b1.style.height = `${Math.max(5, (this.array[i] / this.getMaxVal()) * 100)}%`;
+                    const label1 = document.getElementById(`label-${i}`);
+                    if(label1) label1.textContent = this.array[i];
+                    const tooltip1 = b1.querySelector('.tooltip-text');
+                    if(tooltip1) tooltip1.textContent = this.array[i];
+                    b2.style.height = `${Math.max(5, (this.array[j] / this.getMaxVal()) * 100)}%`;
+                    const label2 = document.getElementById(`label-${j}`);
+                    if(label2) label2.textContent = this.array[j];
+                    const tooltip2 = b2.querySelector('.tooltip-text');
+                    if(tooltip2) tooltip2.textContent = this.array[j];
+                    b1.classList.add('animate-bounce-subtle');
+                    b2.classList.add('animate-bounce-subtle');
+                    setTimeout(() => { b1.classList.remove('animate-bounce-subtle'); b2.classList.remove('animate-bounce-subtle'); }, 300);
+                }
+                
+                await this.sleep(this.speed);
+                await this.resetBarColors([i, j]);
+            }
+
+            async markSorted(indices) {
+                this.playBeep(800, 'sine');
+                await this.highlightBars(indices, 'bg-success shadow-[0_0_10px_#22c55e]');
             }
 
             async startSorting() {
                 if (this.isSort) return;
-
                 this.isSort = true;
-                this.sortBtn.textContent = '⏸️ Sorting...';
-                this.sortBtn.disabled = true;
+                this.history = [];
+                this.historyIndex = -1;
+                this.sortBtn.innerHTML = '⏳ Sorting...';
+                this.sortBtn.classList.add('opacity-70', 'cursor-not-allowed');
                 this.generateBtn.disabled = true;
-                this.loadCustomBtn.disabled = true;
-                this.customArrayInput.disabled = true;
-
-                Object.values(this.presetButtons).forEach(btn => btn.disabled = true);
-
-                this.resetStats();
+                this.clearLogs();
+                this.addLog("Started sorting algorithm.", "success");
                 this.startTimer();
 
-                const algorithm = this.algorithmSelect.value;
-
+                const alg = this.algorithmSelect.value;
                 try {
-                    switch (algorithm) {
-                        case 'bubble':
-                            await this.bubbleSort();
-                            break;
-                        case 'selection':
-                            await this.selectionSort();
-                            break;
-                        case 'insertion':
-                            await this.insertionSort();
-                            break;
-                        case 'quick':
-                            await this.quickSort(0, this.array.length - 1);
-                            break;
-                        case 'merge':
-                            await this.mergeSort();
-                            break;
-                        case 'heap':
-                            await this.heapSort();
-                            break;
-                        case 'radix':
-                            await this.radixSort();
-                            break;
+                    switch(alg) {
+                        case 'bubble': await this.bubbleSort(); break;
+                        case 'selection': await this.selectionSort(); break;
+                        case 'insertion': await this.insertionSort(); break;
+                        case 'quick': await this.quickSort(0, this.array.length - 1); break;
+                        case 'merge': await this.mergeSort(this.array, 0, this.array.length - 1); break;
+                        case 'heap': await this.heapSort(); break;
+                        case 'radix': await this.radixSort(); break;
                     }
 
-                    await this.markAsSorted(Array.from({length: this.array.length}, (_, i) => i));
+                    // Final Animation
+                    for(let i=0; i<this.array.length; i++) {
+                        await this.markSorted([i]);
+                        await this.sleep(10);
+                    }
                     this.stopTimer();
-                    this.showSuccessMessage('Sorting complete!');
+                    this.addLog("Array sorted successfully!", "success");
+                    this.recordState();
+                    this.showSuccessModal();
+                } catch(e) {
+                    console.error(e);
+                    this.addLog("Error during sorting", "danger");
                 } finally {
                     this.isSort = false;
-                    this.sortBtn.textContent = '▶️ Start Sorting';
-                    this.sortBtn.disabled = false;
+                    this.sortBtn.innerHTML = '▶️ Start Sorting';
+                    this.sortBtn.classList.remove('opacity-70', 'cursor-not-allowed');
                     this.generateBtn.disabled = false;
-                    this.loadCustomBtn.disabled = false;
-                    this.customArrayInput.disabled = false;
-
-                    Object.values(this.presetButtons).forEach(btn => btn.disabled = false);
+                    document.querySelectorAll('#pseudocodeContainer > div').forEach(el => el.classList.remove('active-line'));
                 }
             }
 
+            showSuccessModal() {
+                const modal = document.getElementById('successModal');
+                document.getElementById('modalTime').textContent = this.timeElapsedEl.textContent.replace('s','');
+                document.getElementById('modalSwaps').textContent = this.swaps;
+                modal.classList.remove('hidden');
+                setTimeout(() => modal.classList.add('opacity-100'), 10);
+                this.fireConfetti();
+            }
+
+            fireConfetti() {
+                const canvas = document.getElementById('confettiCanvas');
+                canvas.classList.remove('hidden');
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+                const ctx = canvas.getContext('2d');
+                const pieces = [];
+                for(let i=0; i<100; i++) {
+                    pieces.push({
+                        x: canvas.width/2, y: canvas.height/2 + 100,
+                        vx: (Math.random()-0.5)*20, vy: (Math.random()-1)*20 - 5,
+                        size: Math.random()*10+5, color: `hsl(${Math.random()*360}, 100%, 50%)`
+                    });
+                }
+                function animate() {
+                    ctx.clearRect(0,0,canvas.width,canvas.height);
+                    let active = false;
+                    pieces.forEach(p => {
+                        p.x += p.vx; p.y += p.vy; p.vy += 0.5;
+                        if(p.y < canvas.height) active = true;
+                        ctx.fillStyle = p.color;
+                        ctx.fillRect(p.x, p.y, p.size, p.size);
+                    });
+                    if(active) requestAnimationFrame(animate);
+                    else canvas.classList.add('hidden');
+                }
+                animate();
+            }
+
+            // ================= ALGORITHMS =================
             async bubbleSort() {
                 const n = this.array.length;
                 for (let i = 0; i < n - 1; i++) {
+                    this.highlightCode(0);
                     for (let j = 0; j < n - i - 1; j++) {
+                        this.highlightCode(1);
+                        await this.sleep(this.speed/2);
+                        this.highlightCode(2);
                         if (await this.compare(j, j + 1)) {
+                            this.highlightCode(3);
                             await this.swap(j, j + 1);
                         }
                     }
-                    await this.markAsSorted([n - i - 1]);
+                    await this.markSorted([n - i - 1]);
                 }
+                await this.markSorted([0]);
             }
 
             async selectionSort() {
                 const n = this.array.length;
                 for (let i = 0; i < n - 1; i++) {
+                    this.highlightCode(0);
                     let minIdx = i;
-                    await this.highlightBars([i], 'bg-gradient-to-t from-orange-400 to-orange-600');
-                    
+                    this.highlightCode(1);
+                    await this.highlightBars([minIdx], 'bg-purpleUi shadow-[0_0_10px_#a855f7]');
                     for (let j = i + 1; j < n; j++) {
-                        if (await this.compare(minIdx, j)) {
+                        this.highlightCode(2);
+                        this.highlightCode(3);
+                        if (await this.compare(minIdx, j) == false && this.array[j] < this.array[minIdx]) {
+                            // custom compare since selection sort needs <
                             await this.resetBarColors([minIdx]);
                             minIdx = j;
-                            await this.highlightBars([minIdx], 'bg-gradient-to-t from-orange-400 to-orange-600');
+                            this.highlightCode(4);
+                            this.addLog(`New minimum found: ${this.array[minIdx]}`, 'info');
+                            await this.highlightBars([minIdx], 'bg-purpleUi shadow-[0_0_10px_#a855f7]');
                         }
                     }
-                    
-                    if (minIdx !== i) {
-                        await this.swap(i, minIdx);
-                    }
+                    this.highlightCode(5);
+                    if (minIdx !== i) await this.swap(i, minIdx);
                     await this.resetBarColors([minIdx]);
-                    await this.markAsSorted([i]);
+                    await this.markSorted([i]);
                 }
+                await this.markSorted([n-1]);
             }
 
             async insertionSort() {
                 const n = this.array.length;
+                await this.markSorted([0]);
                 for (let i = 1; i < n; i++) {
+                    this.highlightCode(0);
                     let key = this.array[i];
+                    this.highlightCode(1);
                     let j = i - 1;
+                    this.highlightCode(2);
                     
-                    await this.highlightBars([i], 'bg-gradient-to-t from-cyan-400 to-cyan-600');
+                    await this.highlightBars([i], 'bg-purpleUi');
+                    this.addLog(`Key element is ${key}`, 'info');
                     
                     while (j >= 0 && this.array[j] > key) {
-                        this.array[j + 1] = this.array[j];
-                        const bar = document.getElementById(`bar-${j + 1}`);
-                        const label = document.getElementById(`label-${j + 1}`);
-                        if (bar) {
-                            bar.style.height = `${this.array[j + 1] * 3}px`;
-                        }
-                        if (label && this.showValues) {
-                            label.textContent = this.array[j + 1];
-                        }
+                        this.highlightCode(3);
+                        this.comparisons++; this.comparisonsEl.textContent = this.comparisons;
+                        this.addLog(`${this.array[j]} > ${key}, moving ${this.array[j]} right`);
                         
-                        this.swaps++;
-                        this.swapsEl.textContent = this.swaps;
+                        this.highlightCode(4);
+                        this.array[j + 1] = this.array[j];
+                        const barEl_j_1 = document.getElementById(`bar-${j+1}`);
+                    if(barEl_j_1) {
+                        barEl_j_1.style.height = `${Math.max(5, (this.array[j+1] / this.getMaxVal()) * 100)}%`;
+                        const labelEl = document.getElementById(`label-${j+1}`);
+                        if(labelEl) labelEl.textContent = this.array[j+1];
+                        const tooltipEl = barEl_j_1.querySelector('.tooltip-text');
+                        if(tooltipEl) tooltipEl.textContent = this.array[j+1];
+                    }
+                        
+                        this.swaps++; this.swapsEl.textContent = this.swaps;
                         await this.sleep(this.speed);
+                        
+                        this.highlightCode(5);
                         j--;
                     }
-                    
+                    this.highlightCode(6);
                     this.array[j + 1] = key;
-                    const bar = document.getElementById(`bar-${j + 1}`);
-                    const label = document.getElementById(`label-${j + 1}`);
-                    if (bar) {
-                        bar.style.height = `${key * 3}px`;
+                    const barEl_j_1 = document.getElementById(`bar-${j+1}`);
+                    if(barEl_j_1) {
+                        barEl_j_1.style.height = `${Math.max(5, (key / this.getMaxVal()) * 100)}%`;
+                        const labelEl = document.getElementById(`label-${j+1}`);
+                        if(labelEl) labelEl.textContent = key;
+                        const tooltipEl = barEl_j_1.querySelector('.tooltip-text');
+                        if(tooltipEl) tooltipEl.textContent = key;
                     }
-                    if (label && this.showValues) {
-                        label.textContent = key;
-                    }
-                    
                     await this.resetBarColors([i]);
-                    await this.sleep(this.speed);
+                    await this.markSorted(Array.from({length: i+1}, (_, idx) => idx));
                 }
             }
 
             async quickSort(low, high) {
                 if (low < high) {
+                    this.highlightCode(1);
+                    this.highlightCode(2);
                     const pi = await this.partition(low, high);
+                    this.highlightCode(3);
                     await this.quickSort(low, pi - 1);
+                    this.highlightCode(4);
                     await this.quickSort(pi + 1, high);
+                } else if(low >= 0 && high >= 0 && low === high) {
+                    await this.markSorted([low]);
                 }
             }
 
             async partition(low, high) {
+                this.highlightCode(7);
                 const pivot = this.array[high];
-                await this.highlightBars([high], 'bg-gradient-to-t from-indigo-400 to-indigo-600');
+                await this.highlightBars([high], 'bg-purpleUi shadow-[0_0_10px_#a855f7]');
+                this.addLog(`Pivot selected: ${pivot}`, 'info');
                 
+                this.highlightCode(8);
                 let i = low - 1;
                 
                 for (let j = low; j < high; j++) {
-                    if (await this.compare(high, j)) {
+                    this.highlightCode(9);
+                    this.highlightCode(10);
+                    if (await this.compare(high, j)) { // pivot > arr[j] -> arr[j] < pivot
+                        this.highlightCode(11);
                         i++;
                         if (i !== j) {
+                            this.highlightCode(12);
                             await this.swap(i, j);
                         }
                     }
                 }
-                
+                this.highlightCode(13);
                 await this.swap(i + 1, high);
-                await this.resetBarColors([high]);
+                await this.markSorted([i+1]);
+                this.highlightCode(14);
                 return i + 1;
             }
 
-            async mergeSort(arr = this.array, left = 0, right = this.array.length - 1) {
+            async mergeSort(arr, left, right) {
                 if (left < right) {
+                    this.highlightCode(1);
                     const mid = Math.floor((left + right) / 2);
+                    this.highlightCode(2);
                     
-                    await this.highlightBars([mid], 'bg-gradient-to-t from-pink-400 to-pink-600');
+                    await this.highlightBars([mid], 'bg-purpleUi');
                     await this.sleep(this.speed);
                     
+                    this.highlightCode(3);
                     await this.mergeSort(arr, left, mid);
+                    this.highlightCode(4);
                     await this.mergeSort(arr, mid + 1, right);
+                    this.highlightCode(5);
                     await this.merge(arr, left, mid, right);
                 }
             }
 
             async merge(arr, left, mid, right) {
+                this.highlightCode(7);
                 const leftArr = arr.slice(left, mid + 1);
                 const rightArr = arr.slice(mid + 1, right + 1);
                 
                 let i = 0, j = 0, k = left;
+                this.addLog(`Merging sub-arrays ${left}-${mid} and ${mid+1}-${right}`, 'info');
                 
                 while (i < leftArr.length && j < rightArr.length) {
-                    await this.highlightBars([k], 'bg-gradient-to-t from-cyan-400 to-cyan-600');
+                    this.highlightCode(8);
+                    await this.highlightBars([k], 'bg-warning');
+                    this.comparisons++; this.comparisonsEl.textContent = this.comparisons;
                     
                     if (leftArr[i] <= rightArr[j]) {
-                        arr[k] = leftArr[i];
-                        i++;
+                        arr[k] = leftArr[i]; i++;
                     } else {
-                        arr[k] = rightArr[j];
-                        j++;
+                        arr[k] = rightArr[j]; j++;
                     }
                     
-                    const bar = document.getElementById(`bar-${k}`);
-                    const label = document.getElementById(`label-${k}`);
-                    if (bar) {
-                        bar.style.height = `${arr[k] * 3}px`;
+                    const barEl_k = document.getElementById(`bar-${k}`);
+                    if(barEl_k) {
+                        barEl_k.style.height = `${Math.max(5, (arr[k] / this.getMaxVal()) * 100)}%`;
+                        const labelEl = document.getElementById(`label-${k}`);
+                        if(labelEl) labelEl.textContent = arr[k];
+                        const tooltipEl = barEl_k.querySelector('.tooltip-text');
+                        if(tooltipEl) tooltipEl.textContent = arr[k];
                     }
-                    if (label && this.showValues) {
-                        label.textContent = arr[k];
-                    }
-                    
-                    this.swaps++;
-                    this.swapsEl.textContent = this.swaps;
+                    this.swaps++; this.swapsEl.textContent = this.swaps;
                     await this.sleep(this.speed);
                     k++;
                 }
                 
                 while (i < leftArr.length) {
                     arr[k] = leftArr[i];
-                    const bar = document.getElementById(`bar-${k}`);
-                    const label = document.getElementById(`label-${k}`);
-                    if (bar) {
-                        bar.style.height = `${arr[k] * 3}px`;
+                    const barEl_k = document.getElementById(`bar-${k}`);
+                    if(barEl_k) {
+                        barEl_k.style.height = `${Math.max(5, (arr[k] / this.getMaxVal()) * 100)}%`;
+                        const labelEl = document.getElementById(`label-${k}`);
+                        if(labelEl) labelEl.textContent = arr[k];
+                        const tooltipEl = barEl_k.querySelector('.tooltip-text');
+                        if(tooltipEl) tooltipEl.textContent = arr[k];
                     }
-                    if (label && this.showValues) {
-                        label.textContent = arr[k];
-                    }
-                    i++;
-                    k++;
+                    i++; k++;
+                    await this.sleep(this.speed/2);
                 }
-                
                 while (j < rightArr.length) {
                     arr[k] = rightArr[j];
-                    const bar = document.getElementById(`bar-${k}`);
-                    const label = document.getElementById(`label-${k}`);
-                    if (bar) {
-                        bar.style.height = `${arr[k] * 3}px`;
+                    const barEl_k = document.getElementById(`bar-${k}`);
+                    if(barEl_k) {
+                        barEl_k.style.height = `${Math.max(5, (arr[k] / this.getMaxVal()) * 100)}%`;
+                        const labelEl = document.getElementById(`label-${k}`);
+                        if(labelEl) labelEl.textContent = arr[k];
+                        const tooltipEl = barEl_k.querySelector('.tooltip-text');
+                        if(tooltipEl) tooltipEl.textContent = arr[k];
                     }
-                    if (label && this.showValues) {
-                        label.textContent = arr[k];
-                    }
-                    j++;
-                    k++;
+                    j++; k++;
+                    await this.sleep(this.speed/2);
                 }
-                
-                await this.resetBarColors(Array.from({length: right - left + 1}, (_, i) => left + i));
+                await this.resetBarColors(Array.from({length: right - left + 1}, (_, idx) => left + idx));
             }
 
             async heapSort() {
                 const n = this.array.length;
-                
-                // Build max heap
+                this.highlightCode(1);
                 for (let i = Math.floor(n / 2) - 1; i >= 0; i--) {
+                    this.highlightCode(2);
                     await this.heapify(n, i);
                 }
-                
-                // Extract elements from heap one by one
+                this.highlightCode(3);
                 for (let i = n - 1; i > 0; i--) {
+                    this.highlightCode(4);
                     await this.swap(0, i);
-                    await this.markAsSorted([i]);
+                    await this.markSorted([i]);
+                    this.highlightCode(5);
                     await this.heapify(i, 0);
                 }
-                await this.markAsSorted([0]);
+                await this.markSorted([0]);
             }
 
             async heapify(n, i) {
+                this.highlightCode(8);
                 let largest = i;
                 const left = 2 * i + 1;
                 const right = 2 * i + 2;
                 
-                await this.highlightBars([i], 'bg-gradient-to-t from-purple-400 to-purple-600');
+                await this.highlightBars([i], 'bg-purpleUi');
                 
-                if (left < n && await this.compare(left, largest)) {
-                    largest = left;
-                }
+                this.highlightCode(9);
+                if (left < n && await this.compare(left, largest)) largest = left;
                 
-                if (right < n && await this.compare(right, largest)) {
-                    largest = right;
-                }
+                this.highlightCode(11);
+                if (right < n && await this.compare(right, largest)) largest = right;
                 
+                this.highlightCode(13);
                 if (largest !== i) {
+                    this.highlightCode(14);
                     await this.swap(i, largest);
+                    this.highlightCode(15);
                     await this.heapify(n, largest);
                 }
-                
                 await this.resetBarColors([i]);
             }
 
             async radixSort() {
+                this.highlightCode(1);
                 const max = Math.max(...this.array);
-                const maxDigits = max.toString().length;
-                
-                for (let digit = 0; digit < maxDigits; digit++) {
-                    await this.countingSort(digit);
+                this.highlightCode(2);
+                for (let exp = 1; Math.floor(max / exp) > 0; exp *= 10) {
+                    this.highlightCode(3);
+                    await this.countingSort(exp);
                 }
             }
 
-            async countingSort(digit) {
+            async countingSort(exp) {
                 const n = this.array.length;
                 const output = new Array(n);
                 const count = new Array(10).fill(0);
                 
-                // Count occurrences of each digit
+                this.addLog(`Counting sort for digit ${exp}`, 'info');
+                
                 for (let i = 0; i < n; i++) {
-                    const digitValue = Math.floor(this.array[i] / Math.pow(10, digit)) % 10;
-                    count[digitValue]++;
-                    await this.highlightBars([i], 'bg-gradient-to-t from-teal-400 to-teal-600');
+                    const digit = Math.floor(this.array[i] / exp) % 10;
+                    count[digit]++;
+                    await this.highlightBars([i], 'bg-accent');
                     await this.sleep(this.speed / 4);
                     await this.resetBarColors([i]);
                 }
                 
-                // Change count[i] to actual position
-                for (let i = 1; i < 10; i++) {
-                    count[i] += count[i - 1];
-                }
+                for (let i = 1; i < 10; i++) count[i] += count[i - 1];
                 
-                // Build output array
                 for (let i = n - 1; i >= 0; i--) {
-                    const digitValue = Math.floor(this.array[i] / Math.pow(10, digit)) % 10;
-                    output[count[digitValue] - 1] = this.array[i];
-                    count[digitValue]--;
-                    
-                    await this.highlightBars([i], 'bg-gradient-to-t from-amber-400 to-amber-600');
-                    await this.sleep(this.speed);
+                    const digit = Math.floor(this.array[i] / exp) % 10;
+                    output[count[digit] - 1] = this.array[i];
+                    count[digit]--;
+                    await this.highlightBars([i], 'bg-warning');
+                    await this.sleep(this.speed / 2);
                     await this.resetBarColors([i]);
                 }
                 
-                // Copy output array to original array
                 for (let i = 0; i < n; i++) {
                     this.array[i] = output[i];
-                    const bar = document.getElementById(`bar-${i}`);
-                    const label = document.getElementById(`label-${i}`);
-                    if (bar) {
-                        bar.style.height = `${this.array[i] * 3}px`;
+                    const barEl_i = document.getElementById(`bar-${i}`);
+                    if(barEl_i) {
+                        barEl_i.style.height = `${Math.max(5, (this.array[i] / this.getMaxVal()) * 100)}%`;
+                        const labelEl = document.getElementById(`label-${i}`);
+                        if(labelEl) labelEl.textContent = this.array[i];
+                        const tooltipEl = barEl_i.querySelector('.tooltip-text');
+                        if(tooltipEl) tooltipEl.textContent = this.array[i];
                     }
-                    if (label && this.showValues) {
-                        label.textContent = this.array[i];
-                    }
+                    await this.highlightBars([i], 'bg-success');
                     await this.sleep(this.speed / 2);
+                    await this.resetBarColors([i]);
                 }
-            }
-
-            updateAlgorithmInfo() {
-                const algorithm = this.algorithmSelect.value;
-                const descriptions = {
-                    bubble: {
-                        name: "Bubble Sort",
-                        description: "Compares each pair of adjacent items and swaps them if they are in the wrong order. Heavier elements 'bubble' to the end.",
-                        timeComplexity: "O(n²)",
-                        spaceComplexity: "O(1)",
-                        stable: "Yes"
-                    },
-                    selection: {
-                        name: "Selection Sort",
-                        description: "Repeatedly finds the minimum element from the unsorted part and places it at the beginning.",
-                        timeComplexity: "O(n²)",
-                        spaceComplexity: "O(1)",
-                        stable: "No"
-                    },
-                    insertion: {
-                        name: "Insertion Sort",
-                        description: "Builds the final sorted array one item at a time by inserting elements into the correct position.",
-                        timeComplexity: "O(n²)",
-                        spaceComplexity: "O(1)",
-                        stable: "Yes"
-                    },
-                    quick: {
-                        name: "Quick Sort",
-                        description: "A divide-and-conquer algorithm that picks an element as a pivot and partitions the given array around the picked pivot.",
-                        timeComplexity: "O(n log n) average, O(n²) worst",
-                        spaceComplexity: "O(log n)",
-                        stable: "No"
-                    },
-                    merge: {
-                        name: "Merge Sort",
-                        description: "Divides the array into smaller subarrays, sorts them, and then merges them back together. Uses a divide-and-conquer approach.",
-                        timeComplexity: "O(n log n)",
-                        spaceComplexity: "O(n)",
-                        stable: "Yes"
-                    },
-                    heap: {
-                        name: "Heap Sort",
-                        description: "Builds a max heap from the array, then repeatedly extracts the maximum element and places it at the end.",
-                        timeComplexity: "O(n log n)",
-                        spaceComplexity: "O(1)",
-                        stable: "No"
-                    },
-                    radix: {
-                        name: "Radix Sort",
-                        description: "Non-comparison based sorting algorithm that sorts by individual digits from least to most significant.",
-                        timeComplexity: "O(d × (n + k))",
-                        spaceComplexity: "O(n + k)",
-                        stable: "Yes"
-                    }
-                };
-
-                const info = descriptions[algorithm];
-                this.algorithmDescription.innerHTML = `
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <h4 class="font-semibold text-lg text-gray-800 dark:text-white mb-2">${info.name}</h4>
-                            <p class="text-gray-600 dark:text-gray-300 mb-4">${info.description}</p>
-                        </div>
-                        <div class="space-y-2">
-                            <div class="flex justify-between">
-                                <span class="font-medium">Time Complexity:</span>
-                                <span class="text-blue-600 dark:text-blue-400">${info.timeComplexity}</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="font-medium">Space Complexity:</span>
-                                <span class="text-green-600 dark:text-green-400">${info.spaceComplexity}</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="font-medium">Stable:</span>
-                                <span class="text-purple-600 dark:text-purple-400">${info.stable}</span>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }
-
-            showInputError(message) {
-                this.inputError.textContent = message;
-                this.inputError.classList.remove('hidden');
-                this.customArrayInput.classList.add('border-red-500', 'focus:ring-red-500', 'animate-shake');
-                setTimeout(() => {
-                    this.customArrayInput.classList.remove('animate-shake');
-                }, 500);
-            }
-
-            hideInputError() {
-                this.inputError.classList.add('hidden');
-                this.customArrayInput.classList.remove('border-red-500', 'focus:ring-red-500');
-            }
-
-            showSuccessMessage(message) {
-                const successDiv = document.createElement('div');
-                successDiv.className = 'mt-1 text-sm text-green-600 dark:text-green-400 animate-pulse-slow';
-                successDiv.textContent = message;
-                
-                this.inputError.parentNode.insertBefore(successDiv, this.inputError.nextSibling);
-                
-                setTimeout(() => {
-                    if (successDiv.parentNode) {
-                        successDiv.parentNode.removeChild(successDiv);
-                    }
-                }, 3000);
             }
         }
 
@@ -1293,25 +1404,5 @@
             new AdvancedSortingVisualizer();
         });
     </script>
-
-    <style>
-        .slider::-webkit-slider-thumb {
-            appearance: none;
-            height: 20px;
-            width: 20px;
-            border-radius: 50%;
-            background: #3b82f6;
-            cursor: pointer;
-        }
-
-        .slider::-moz-range-thumb {
-            height: 20px;
-            width: 20px;
-            border-radius: 50%;
-            background: #3b82f6;
-            cursor: pointer;
-            border: none;
-        }
-    </style>
 </body>
 </html>
